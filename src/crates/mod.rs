@@ -69,7 +69,9 @@ impl FromStr for Crate {
             })),
             ["gh", org, name, sha] => Ok(Crate::GitHub(GitHubRepo {
                 org: org.to_string(),
-                name: name.to_string(),
+                // remove addition info if we have the sha as the crate version
+                // is already uniquely determinated
+                name: name.split('?').next().unwrap().to_string(),
                 sha: Some(sha.to_string()),
             })),
             ["gh", org, name] => Ok(Crate::GitHub(GitHubRepo {
@@ -111,5 +113,14 @@ mod tests {
             "gh/org/user/sha" => Crate::GitHub(GitHubRepo{org: "org".to_string(), name: "user".to_string(), sha: Some("sha".to_string())}),
             "reg/name/version" => Crate::Registry(RegistryCrate{name: "name".to_string(), version: "version".to_string()}),
         }
+
+        assert_eq!(
+            Crate::from_str("gh/org/user?rev=dummyrev/sha").unwrap(),
+            Crate::GitHub(GitHubRepo {
+                org: "org".to_string(),
+                name: "user".to_string(),
+                sha: Some("sha".to_string()),
+            })
+        );
     }
 }
