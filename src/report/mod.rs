@@ -275,6 +275,7 @@ pub fn gen<DB: ReadResults, W: ReportWriter + Display>(
     crates: &[Crate],
     dest: &W,
     config: &Config,
+    output_template: bool,
 ) -> Fallible<TestResults> {
     let raw = generate_report(db, config, ex, crates)?;
 

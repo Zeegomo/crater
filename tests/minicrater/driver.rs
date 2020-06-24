@@ -98,11 +98,16 @@ impl MinicraterRun {
             .minicrater_exec();
 
         // Generate the report
-        Command::crater()
+        let mut cmd = Command::crater()
             .args(&["gen-report", &ex_arg])
             .env("CRATER_CONFIG", &config_file)
-            .arg(report_dir.path())
-            .minicrater_exec();
+            .arg(report_dir.path());
+
+        if env::var_os("MINICRATER_OUTPUT_TEMPLATE_CONTEXT").is_some() {
+            cmd = cmd.arg("--output-templates");
+        }
+
+        cmd.minicrater_exec();
 
         // Read the JSON report
         let json_report = ::std::fs::read(report_dir.path().join("results.json"))
