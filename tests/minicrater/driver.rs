@@ -51,17 +51,17 @@ fn expand_file_names(input: &str, add: &str) -> String {
 
 trait Compare {
     fn file_names(&self) -> Vec<String>;
-    fn test_format(&self, input: &Vec<u8>);
+    fn format(&self, input: Vec<u8>) -> Vec<u8>;
     fn compare(&self, ex_dir: &Path, file_dir: &Path) {
         let file_names = self.file_names();
         for file in &file_names {
             let actual_file = ex_dir.join(expand_file_names(file, ".actual"));
             let expected_file = ex_dir.join(expand_file_names(file, ".expected"));
             // Load actual report
-            let actual_report =
+            let raw_report =
                 ::std::fs::read(file_dir.join(file)).expect(&format!("failed to read {}", file));
             // Test report format
-            self.test_format(&actual_report);
+            let actual_report = self.format(raw_report);
 
             // Load the expected report
             let expected_report = ::std::fs::read(&expected_file).unwrap_or(Vec::new());
@@ -111,11 +111,15 @@ impl Compare for Reports {
         }
     }
 
-    fn test_format(&self, input: &Vec<u8>) {
+    fn format(&self, input: Vec<u8>) -> Vec<u8> {
         match *self {
-            Self::HTML => (),
+            Self::HTML => input,
             Self::JSON => {
-                serde_json::from_slice::<Value>(input).expect("invalid json report");
+                let parsed_report: Value =
+                    serde_json::from_slice(&input).expect("invalid json report");
+                let mut actual_report = serde_json::to_vec_pretty(&parsed_report).unwrap();
+                actual_report.push(b'\n');
+                actual_report
             }
         }
     }
