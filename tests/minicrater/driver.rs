@@ -180,18 +180,17 @@ impl MinicraterRun {
                 .args(&["gen-report", &ex_arg])
                 .env("CRATER_CONFIG", &config_file)
                 .arg(report_dir.path())
+                .arg("--output-templates")
                 .minicrater_exec();
             Reports::JSON.compare(&ex_dir, report_dir.path());
+            Reports::HTML.compare(&ex_dir, report_dir.path());
         } else {
             Command::crater()
                 .args(&["gen-report", &ex_arg])
                 .env("CRATER_CONFIG", &config_file)
                 .arg(report_dir.path())
-                .arg("--output-templates")
                 .minicrater_exec();
-
             Reports::JSON.compare(&ex_dir, report_dir.path());
-            Reports::HTML.compare(&ex_dir, report_dir.path());
         }
     }
 }
