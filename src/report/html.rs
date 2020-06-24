@@ -6,6 +6,8 @@ use crate::report::{
     ResultColor, ResultName, TestResults,
 };
 use crate::results::{EncodingType, FailureReason, TestResult};
+#[cfg(test)]
+use crate::utils::serialize::hashmap_deterministic_serialize;
 use std::collections::HashMap;
 
 #[derive(Serialize)]
@@ -27,10 +29,12 @@ enum ReportCratesHTML {
     Plain(Vec<CrateResultHTML>),
     Tree {
         count: u32,
+        #[cfg_attr(test, serde(serialize_with = "hashmap_deterministic_serialize"))]
         tree: HashMap<String, Vec<CrateResultHTML>>,
     },
     RootResults {
         count: u32,
+        #[cfg_attr(test, serde(serialize_with = "hashmap_deterministic_serialize"))]
         results: HashMap<String, Vec<CrateResultHTML>>,
     },
 }
@@ -62,10 +66,11 @@ struct ResultsContext<'a> {
     ex: &'a Experiment,
     nav: Vec<NavbarItem>,
     categories: Vec<(Comparison, ReportCratesHTML)>,
+    #[cfg_attr(test, serde(serialize_with = "hashmap_deterministic_serialize"))]
     info: HashMap<Comparison, u32>,
     full: bool,
     crates_count: usize,
-
+    #[cfg_attr(test, serde(serialize_with = "hashmap_deterministic_serialize"))]
     comparison_colors: HashMap<Comparison, Color>,
     result_colors: Vec<Color>,
     result_names: Vec<String>,
