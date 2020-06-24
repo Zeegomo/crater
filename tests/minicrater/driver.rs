@@ -97,8 +97,8 @@ trait Compare {
 }
 
 enum Reports {
-    RAW,
-    HTML_CONTEXT,
+    Raw,
+    HTMLContext,
 }
 
 impl Compare for Reports {
@@ -125,8 +125,6 @@ impl MinicraterRun {
     pub(super) fn execute(&self) {
         let ex_dir = PathBuf::from("tests").join("minicrater").join(self.ex);
         let config_file = ex_dir.join("config.toml");
-        let expected_file = ex_dir.join("results.expected.json");
-        let actual_file = ex_dir.join("results.actual.json");
 
         let threads_count = if self.multithread { num_cpus::get() } else { 1 };
 
