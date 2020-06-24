@@ -243,7 +243,7 @@ pub enum Crater {
         dest: Dest,
         #[structopt(name = "force", long = "force")]
         force: bool,
-        #[structopt(name = "output-templates")]
+        #[structopt(name = "output-templates", long = "output-templates")]
         output_templates: bool,
     },
 
@@ -260,7 +260,7 @@ pub enum Crater {
         s3_prefix: report::S3Prefix,
         #[structopt(name = "force", long = "force")]
         force: bool,
-        #[structopt(name = "output-templates")]
+        #[structopt(name = "output-templates", long = "output-templates")]
         output_templates: bool,
     },
 
