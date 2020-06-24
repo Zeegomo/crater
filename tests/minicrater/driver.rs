@@ -104,8 +104,8 @@ enum Reports {
 impl Compare for Reports {
     fn file_names(&self) -> Vec<String> {
         match *self {
-            Self::RAW => vec!["results.json".into()],
-            Self::HTML_CONTEXT => vec![
+            Self::Raw => vec!["results.json".into()],
+            Self::HTMLContext => vec![
                 "index.html.context.json".into(),
                 "downloads.html.context.json".into(),
                 "full.html.context.json".into(),
@@ -114,9 +114,23 @@ impl Compare for Reports {
     }
 
     fn format(&self, input: Vec<u8>) -> Vec<u8> {
-        let parsed_report: Value = serde_json::from_slice(&input).expect("invalid json report");
+        let parsed_report = match *self {
+            Self::HTMLContext => {
+                if let Value::Object(mut map) =
+                    serde_json::from_slice(&input).expect("invalid json report")
+                {
+                    // drop experiment field as it contains non deterministic values
+                    map.remove("ex");
+                    Value::Object(map)
+                } else {
+                    panic!("invalid json report");
+                }
+            }
+            Self::Raw => serde_json::from_slice(&input).expect("invalid json report"),
+        };
         let mut actual_report = serde_json::to_vec_pretty(&parsed_report).unwrap();
         actual_report.push(b'\n');
+
         actual_report
     }
 }
@@ -182,15 +196,15 @@ impl MinicraterRun {
                 .arg(report_dir.path())
                 .arg("--output-templates")
                 .minicrater_exec();
-            failed |= Reports::RAW.compare(&ex_dir, report_dir.path());
-            failed |= Reports::HTML_CONTEXT.compare(&ex_dir, report_dir.path());
+            failed |= Reports::Raw.compare(&ex_dir, report_dir.path());
+            failed |= Reports::HTMLContext.compare(&ex_dir, report_dir.path());
         } else {
             Command::crater()
                 .args(&["gen-report", &ex_arg])
                 .env("CRATER_CONFIG", &config_file)
                 .arg(report_dir.path())
                 .minicrater_exec();
-            failed |= Reports::RAW.compare(&ex_dir, report_dir.path());
+            failed |= Reports::Raw.compare(&ex_dir, report_dir.path());
         }
 
         // Delete the experiment
