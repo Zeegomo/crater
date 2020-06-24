@@ -10,6 +10,8 @@ pub(crate) mod http;
 #[macro_use]
 mod macros;
 pub(crate) mod path;
+#[cfg(test)]
+pub(crate) mod serialize;
 pub mod size;
 pub(crate) mod string;
 

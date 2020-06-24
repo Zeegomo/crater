@@ -6,10 +6,12 @@ use crate::report::{
     ResultColor, ResultName, TestResults,
 };
 use crate::results::{EncodingType, FailureReason, TestResult};
-#[cfg(test)]
-use crate::utils::serialize::hashmap_deterministic_serialize;
+#[cfg(feature = "minicrater")]
+use crate::utils::serialize::{hashmap_deterministic_serialize, sort_vec};
+
 use std::collections::HashMap;
 
+#[cfg_attr(feature = "minicrater", derive(PartialEq, Eq, PartialOrd, Ord))]
 #[derive(Serialize)]
 struct NavbarItem {
     label: &'static str,
@@ -24,17 +26,24 @@ enum CurrentPage {
     Downloads,
 }
 
+#[cfg_attr(feature = "minicrater", derive(Eq))]
 #[derive(Serialize)]
 enum ReportCratesHTML {
     Plain(Vec<CrateResultHTML>),
     Tree {
         count: u32,
-        #[cfg_attr(test, serde(serialize_with = "hashmap_deterministic_serialize"))]
+        #[cfg_attr(
+            feature = "minicrater",
+            serde(serialize_with = "hashmap_deterministic_serialize")
+        )]
         tree: HashMap<String, Vec<CrateResultHTML>>,
     },
     RootResults {
         count: u32,
-        #[cfg_attr(test, serde(serialize_with = "hashmap_deterministic_serialize"))]
+        #[cfg_attr(
+            feature = "minicrater",
+            serde(serialize_with = "hashmap_deterministic_serialize")
+        )]
         results: HashMap<String, Vec<CrateResultHTML>>,
     },
 }
@@ -61,30 +70,47 @@ impl CurrentPage {
     }
 }
 
+// Some attention in the serializing details is needed when
+// executing tests for minicrater. For this reason some fields
+// are omitted because they contains non deterministic data
+// and others are sorted even though we break internal consistency
 #[derive(Serialize)]
 struct ResultsContext<'a> {
+    #[cfg_attr(feature = "minicrater", serde(skip_serializing), allow(dead_code))]
     ex: &'a Experiment,
+    #[cfg_attr(feature = "minicrater", serde(serialize_with = "sort_vec"))]
     nav: Vec<NavbarItem>,
+    #[cfg_attr(feature = "minicrater", serde(serialize_with = "sort_vec"))]
     categories: Vec<(Comparison, ReportCratesHTML)>,
-    #[cfg_attr(test, serde(serialize_with = "hashmap_deterministic_serialize"))]
+    #[cfg_attr(
+        feature = "minicrater",
+        serde(serialize_with = "hashmap_deterministic_serialize")
+    )]
     info: HashMap<Comparison, u32>,
     full: bool,
     crates_count: usize,
-    #[cfg_attr(test, serde(serialize_with = "hashmap_deterministic_serialize"))]
+    #[cfg_attr(
+        feature = "minicrater",
+        serde(serialize_with = "hashmap_deterministic_serialize")
+    )]
     comparison_colors: HashMap<Comparison, Color>,
+    #[cfg_attr(feature = "minicrater", serde(serialize_with = "sort_vec"))]
     result_colors: Vec<Color>,
+    #[cfg_attr(feature = "minicrater", serde(serialize_with = "sort_vec"))]
     result_names: Vec<String>,
 }
 
 #[derive(Serialize)]
 struct DownloadsContext<'a> {
     ex: &'a Experiment,
+    #[cfg_attr(feature = "minicrater", serde(serialize_with = "sort_vec"))]
     nav: Vec<NavbarItem>,
     crates_count: usize,
-
+    #[cfg_attr(feature = "minicrater", serde(serialize_with = "sort_vec"))]
     available_archives: Vec<Archive>,
 }
 
+#[cfg_attr(feature = "minicrater", derive(PartialEq, Eq, PartialOrd, Ord))]
 #[derive(Serialize)]
 struct CrateResultHTML {
     name: String,
@@ -94,8 +120,11 @@ struct CrateResultHTML {
 }
 
 // Map TestResult to usize to avoid the presence of special characters in html
+#[cfg_attr(feature = "minicrater", derive(PartialEq, Eq, PartialOrd, Ord))]
 #[derive(Serialize)]
 struct BuildTestResultHTML {
+    // The exact value of this field may change at runtime
+    #[cfg_attr(feature = "minicrater", serde(skip_serializing))]
     res: usize,
     log: String,
 }
@@ -318,4 +347,35 @@ pub fn write_html_report<W: ReportWriter>(
     )?;
 
     Ok(())
+}
+
+// All traits are implemented by hand to make sure they are consistent
+#[cfg(feature = "minicrater")]
+mod implement_test_traits {
+    use super::ReportCratesHTML;
+    use std::cmp::Ordering;
+
+    impl PartialEq for ReportCratesHTML {
+        fn eq(&self, other: &ReportCratesHTML) -> bool {
+            serde_json::to_string(self)
+                .unwrap()
+                .eq(&serde_json::to_string(other).unwrap())
+        }
+    }
+
+    impl PartialOrd for ReportCratesHTML {
+        fn partial_cmp(&self, other: &ReportCratesHTML) -> Option<Ordering> {
+            serde_json::to_string(self)
+                .unwrap()
+                .partial_cmp(&serde_json::to_string(other).unwrap())
+        }
+    }
+
+    impl Ord for ReportCratesHTML {
+        fn cmp(&self, other: &ReportCratesHTML) -> Ordering {
+            serde_json::to_string(self)
+                .unwrap()
+                .cmp(&serde_json::to_string(other).unwrap())
+        }
+    }
 }

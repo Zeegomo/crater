@@ -8,6 +8,7 @@ use flate2::{write::GzEncoder, Compression};
 use std::collections::HashMap;
 use tar::{Builder as TarBuilder, Header as TarHeader};
 
+#[cfg_attr(feature = "minicrater", derive(PartialEq, Eq, PartialOrd, Ord))]
 #[derive(Serialize)]
 pub struct Archive {
     name: String,

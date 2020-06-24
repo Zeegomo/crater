@@ -1,5 +1,6 @@
 macro_rules! string_enum {
     ($vis:vis enum $name:ident { $($item:ident => $str:expr,)* }) => {
+        #[cfg_attr(feature = "minicrater", derive(PartialOrd, Ord))]
         #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
         $vis enum $name {
             $($item,)*

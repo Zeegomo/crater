@@ -44,6 +44,7 @@ impl ResultName for TestResult {
     }
 }
 
+#[cfg_attr(feature = "minicrater", derive(PartialEq, Eq, PartialOrd, Ord))]
 #[derive(Serialize)]
 pub enum Color {
     Single(&'static str),

@@ -12,6 +12,9 @@ build = "build.rs"
 [profile.dev]
 opt-level = 0
 
+[features]
+minicrater = []
+
 [dependencies]
 base64 = "0.10.1"
 bytes = "0.4.9"
