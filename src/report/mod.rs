@@ -275,7 +275,7 @@ pub fn gen<DB: ReadResults, W: ReportWriter + Display>(
     crates: &[Crate],
     dest: &W,
     config: &Config,
-    output_template: bool,
+    output_templates: bool,
 ) -> Fallible<TestResults> {
     let raw = generate_report(db, config, ex, crates)?;
 
@@ -301,7 +301,14 @@ pub fn gen<DB: ReadResults, W: ReportWriter + Display>(
     info!("writing archives");
     let available_archives = archives::write_logs_archives(db, ex, crates, dest, config)?;
     info!("writing html files");
-    html::write_html_report(ex, crates.len(), &res, available_archives, dest)?;
+    html::write_html_report(
+        ex,
+        crates.len(),
+        &res,
+        available_archives,
+        dest,
+        output_templates,
+    )?;
     info!("writing logs");
     write_logs(db, ex, crates, dest, config)?;
 

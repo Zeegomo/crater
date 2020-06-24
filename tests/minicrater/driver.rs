@@ -95,33 +95,27 @@ trait Compare {
 }
 
 enum Reports {
-    JSON,
-    HTML,
+    RAW,
+    HTML_CONTEXT,
 }
 
 impl Compare for Reports {
     fn file_names(&self) -> Vec<String> {
         match *self {
-            Self::JSON => vec!["results.json".into()],
-            Self::HTML => vec![
-                "index.html".into(),
-                "downloads.html".into(),
-                "full.html".into(),
+            Self::RAW => vec!["results.json".into()],
+            Self::HTML_CONTEXT => vec![
+                "index.html.context.json".into(),
+                "downloads.html.context.json".into(),
+                "full.html.context.json".into(),
             ],
         }
     }
 
     fn format(&self, input: Vec<u8>) -> Vec<u8> {
-        match *self {
-            Self::HTML => input,
-            Self::JSON => {
-                let parsed_report: Value =
-                    serde_json::from_slice(&input).expect("invalid json report");
-                let mut actual_report = serde_json::to_vec_pretty(&parsed_report).unwrap();
-                actual_report.push(b'\n');
-                actual_report
-            }
-        }
+        let parsed_report: Value = serde_json::from_slice(&input).expect("invalid json report");
+        let mut actual_report = serde_json::to_vec_pretty(&parsed_report).unwrap();
+        actual_report.push(b'\n');
+        actual_report
     }
 }
 
@@ -186,15 +180,15 @@ impl MinicraterRun {
                 .arg(report_dir.path())
                 .arg("--output-templates")
                 .minicrater_exec();
-            Reports::JSON.compare(&ex_dir, report_dir.path());
-            Reports::HTML.compare(&ex_dir, report_dir.path());
+            Reports::RAW.compare(&ex_dir, report_dir.path());
+            Reports::HTML_CONTEXT.compare(&ex_dir, report_dir.path());
         } else {
             Command::crater()
                 .args(&["gen-report", &ex_arg])
                 .env("CRATER_CONFIG", &config_file)
                 .arg(report_dir.path())
                 .minicrater_exec();
-            Reports::JSON.compare(&ex_dir, report_dir.path());
+            Reports::RAW.compare(&ex_dir, report_dir.path());
         }
     }
 }
