@@ -259,15 +259,16 @@ fn write_report<W: ReportWriter>(
     };
 
     info!("generating {}", to);
-    let html = minifier::html::minify(&assets::render_template("report/results.html", &context)?);
-    dest.write_string(to, html.into(), &mime::TEXT_HTML)?;
-
-    if output_templates {
+    if cfg!(feature = "minicrater") {
         dest.write_string(
             [to, ".context.json"].concat(),
             serde_json::to_string(&context)?.into(),
             &mime::APPLICATION_JSON,
         )?;
+    } else {
+        let html =
+            minifier::html::minify(&assets::render_template("report/results.html", &context)?);
+        dest.write_string(to, html.into(), &mime::TEXT_HTML)?;
     }
 
     Ok(())
@@ -288,15 +289,17 @@ fn write_downloads<W: ReportWriter>(
     };
 
     info!("generating downloads.html");
-    let html = minifier::html::minify(&assets::render_template("report/downloads.html", &context)?);
-    dest.write_string("downloads.html", html.into(), &mime::TEXT_HTML)?;
 
-    if output_templates {
+    if cfg!(feature = "minicrater") {
         dest.write_string(
             "downloads.html.context.json",
             serde_json::to_string(&context)?.into(),
             &mime::APPLICATION_JSON,
         )?;
+    } else {
+        let html =
+            minifier::html::minify(&assets::render_template("report/downloads.html", &context)?);
+        dest.write_string("downloads.html", html.into(), &mime::TEXT_HTML)?;
     }
 
     Ok(())
