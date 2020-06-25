@@ -1,6 +1,6 @@
 macro_rules! string_enum {
     ($vis:vis enum $name:ident { $($item:ident => $str:expr,)* }) => {
-        #[cfg_attr(feature = "minicrater", derive(PartialOrd, Ord))]
+        #[cfg_attr(test, derive(PartialOrd, Ord))]
         #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
         $vis enum $name {
             $($item,)*
@@ -84,4 +84,34 @@ macro_rules! btreeset {
     ($($x:expr),+ $(,)?) => (
         vec![$($x),+].into_iter().collect::<BTreeSet<_>>()
     );
+}
+
+macro_rules! impl_ord_from_serialize {
+    ($name:ident) => {
+        impl ::std::cmp::PartialEq for $name {
+            fn eq(&self, other: &$name) -> bool {
+                serde_json::to_string(self)
+                    .unwrap()
+                    .eq(&serde_json::to_string(other).unwrap())
+            }
+        }
+
+        impl ::std::cmp::Eq for $name {}
+
+        impl ::std::cmp::PartialOrd for $name {
+            fn partial_cmp(&self, other: &$name) -> Option<::std::cmp::Ordering> {
+                serde_json::to_string(self)
+                    .unwrap()
+                    .partial_cmp(&serde_json::to_string(other).unwrap())
+            }
+        }
+
+        impl ::std::cmp::Ord for $name {
+            fn cmp(&self, other: &$name) -> ::std::cmp::Ordering {
+                serde_json::to_string(self)
+                    .unwrap()
+                    .cmp(&serde_json::to_string(other).unwrap())
+            }
+        }
+    };
 }

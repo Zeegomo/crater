@@ -71,6 +71,12 @@ mod tests {
 
     #[test]
     fn test_serialize_vec() {
+        if cfg!(test) {
+            println!("cacca");
+        } else {
+            println!("c3a");
+        }
+        assert!(false);
         let unsorted = TestVecSerialize {
             test_field: (0..10).rev().collect(),
         };

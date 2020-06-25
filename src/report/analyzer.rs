@@ -1,5 +1,6 @@
 use super::{Comparison, CrateResult, RawTestResults};
 use crate::crates::Crate;
+use crate::prelude::*;
 use crate::results::{
     FailureReason,
     TestResult::{self, BuildFail},
@@ -17,7 +18,7 @@ pub enum ReportConfig {
     Complete(ToolchainSelect),
 }
 
-#[cfg_attr(test, derive(Debug, PartialEq))]
+#[cfg_attr(test, derive(Debug, Serialize))]
 #[derive(Clone)]
 pub enum ReportCrates {
     Plain(Vec<CrateResult>),
@@ -258,4 +259,6 @@ mod tests {
 
         Ok(())
     }
+
+    impl_ord_from_serialize!(ReportCrates);
 }

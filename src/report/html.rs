@@ -9,7 +9,7 @@ use crate::results::{EncodingType, FailureReason, TestResult};
 #[cfg(feature = "minicrater")]
 use crate::utils::serialize::{hashmap_deterministic_serialize, sort_vec};
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[cfg_attr(feature = "minicrater", derive(PartialEq, Eq, PartialOrd, Ord))]
 #[derive(Serialize)]
@@ -170,8 +170,19 @@ fn write_report<W: ReportWriter>(
         }
     };
 
-    let categories = res
-        .categories
+    let raw_categories = &res.categories;
+
+    #[cfg(test)]
+    let raw_categories = {
+        let cats = res
+            .categories
+            .iter()
+            .map(|(&k, v)| (k, v.to_owned()))
+            .collect::<BTreeMap<_, _>>();
+        cats
+    };
+
+    let categories = raw_categories
         .iter()
         .filter(|(category, _)| full || category.show_in_summary())
         .map(|(&category, crates)| (category, crates.to_owned()))
@@ -353,32 +364,9 @@ pub fn write_html_report<W: ReportWriter>(
 }
 
 // All traits are implemented by hand to make sure they are consistent
-#[cfg(feature = "minicrater")]
+#[cfg(test)]
 mod implement_test_traits {
     use super::ReportCratesHTML;
-    use std::cmp::Ordering;
 
-    impl PartialEq for ReportCratesHTML {
-        fn eq(&self, other: &ReportCratesHTML) -> bool {
-            serde_json::to_string(self)
-                .unwrap()
-                .eq(&serde_json::to_string(other).unwrap())
-        }
-    }
-
-    impl PartialOrd for ReportCratesHTML {
-        fn partial_cmp(&self, other: &ReportCratesHTML) -> Option<Ordering> {
-            serde_json::to_string(self)
-                .unwrap()
-                .partial_cmp(&serde_json::to_string(other).unwrap())
-        }
-    }
-
-    impl Ord for ReportCratesHTML {
-        fn cmp(&self, other: &ReportCratesHTML) -> Ordering {
-            serde_json::to_string(self)
-                .unwrap()
-                .cmp(&serde_json::to_string(other).unwrap())
-        }
-    }
+    impl_ord_from_serialize!(ReportCratesHTML);
 }
